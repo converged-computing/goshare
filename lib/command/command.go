@@ -2,7 +2,6 @@ package command
 
 import (
 	"bytes"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -26,8 +25,14 @@ type Output struct {
 	ExitCode int
 }
 
+// A command holds the exec.Cmd and pointers to buffers, etc.
+type CommandWrapper struct {
+	Command *exec.Cmd
+	Builder *strings.Builder
+}
+
 // RunInteractive performs a syscall (e.g., for a container shell)
-func RunInteractive(cmd []string, env []string) error {
+func RunInteractive(command []string, env []string) error {
 
 	environ := os.Environ()
 
@@ -36,45 +41,46 @@ func RunInteractive(cmd []string, env []string) error {
 		environ = append(environ, env...)
 	}
 	// TODO add debug print here?
-	return syscall.Exec(cmd[0], cmd, environ)
+	return syscall.Exec(command[0], command, environ)
 }
 
-// Run a background process and return the PID
-func RunDetachedCommand(cmd []string, env []string) (*exec.Cmd, error) {
+// Run a background process and return the command, response buffers, and any error
+func RunDetachedCommand(command []string, env []string) (CommandWrapper, error) {
 
-	Cmd := exec.Command(cmd[0], cmd[1:]...)
-	Cmd.Env = os.Environ()
+	cmd, builder := exec.Command(command[0], command[1:]...), new(strings.Builder)
+	cmd.Env = os.Environ()
+	cmd.Stdout = builder
 
-	// TODO where else to write output?
-	Cmd.Stdout = os.Stdout
-	err := Cmd.Start()
-	if err != nil {
-		log.Printf("Error running subprocess %d\n", Cmd.Process.Pid)
-		return Cmd, err
+	res := CommandWrapper{
+		Command: cmd,
+		Builder: builder,
 	}
-	log.Printf("Just ran subprocess %d, exiting\n", Cmd.Process.Pid)
-	return Cmd, nil
+	err := cmd.Start()
+	if err != nil {
+		return res, err
+	}
+	return res, nil
 }
 
 // RunCommand runs one command and returs an error, output, and error
-func RunCommand(cmd []string, env []string) (Output, error) {
+func RunCommand(command []string, env []string) (Output, error) {
 
 	// Define the command!
-	Cmd := exec.Command(cmd[0], cmd[1:]...)
-	Cmd.Env = os.Environ()
+	cmd := exec.Command(command[0], command[1:]...)
+	cmd.Env = os.Environ()
 
 	// Prepare to write to output and error streams
 	var outstream, errstream bytes.Buffer
-	Cmd.Stdout = &outstream
-	Cmd.Stderr = &errstream
+	cmd.Stdout = &outstream
+	cmd.Stderr = &errstream
 
 	// If we have environment strings, add them
 	if len(env) > 0 {
-		Cmd.Env = append(Cmd.Env, env...)
+		cmd.Env = append(cmd.Env, env...)
 	}
 
 	// Run the command
-	err := Cmd.Run()
+	err := cmd.Run()
 
 	// Prepare an output object to return
 	output := Output{Out: outstream.String(), Err: errstream.String()}

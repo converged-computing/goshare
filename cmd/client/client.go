@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -18,7 +19,10 @@ const (
 	protocol = "unix"
 )
 
-var sockAddr string
+var (
+	l               = log.New(os.Stderr, "🟪️  client: ", log.Ldate|log.Ltime|log.Lshortfile)
+	sockAddr string = "/tmp/echo.sock"
+)
 
 func main() {
 
@@ -35,8 +39,8 @@ func main() {
 
 	// Serialized as a string
 	cmd := strings.Join(listcmd, " ")
-	log.Printf("      socket path: %s", sockAddr)
-	log.Printf("requested command: %s", cmd)
+	l.Printf("      socket path: %s", sockAddr)
+	l.Printf("requested command: %s", cmd)
 
 	// Connection options
 	var (
@@ -62,7 +66,7 @@ func main() {
 	client := pb.NewStreamClient(conn)
 	stream, err := client.Command(context.Background())
 	if err != nil {
-		log.Fatalf("can not issue command to stream client %v", err)
+		l.Fatalf("can not issue command to stream client %v", err)
 	}
 
 	ctx := stream.Context()
@@ -75,9 +79,9 @@ func main() {
 		// The message includes the command (could eventually include other things)
 		message := pb.CommandRequest{Command: cmd}
 		if err := stream.Send(&message); err != nil {
-			log.Fatalf("can not send %v", err)
+			l.Fatalf("can not send %v", err)
 		}
-		log.Printf("%s sent command", message.Command)
+		l.Printf("%s sent command", message.Command)
 
 		// Short sleep to get pid back
 		time.Sleep(time.Millisecond * 200)
@@ -85,19 +89,19 @@ func main() {
 		// Expect to receive a pid back
 		resp, err := stream.Recv()
 		if err == io.EOF {
-			log.Printf("end of file received, closing")
+			l.Printf("end of file received, closing")
 			close(done)
 			return
 		}
 		if err != nil {
-			log.Fatalf("can not receive %v", err)
+			l.Fatalf("can not receive %v", err)
 		}
 		pid = resp.Pid
-		log.Printf("new pid %d received", pid)
+		l.Printf("new pid %d received", pid)
 
 		// Close our stream here
 		if err := stream.CloseSend(); err != nil {
-			log.Println(err)
+			l.Println(err)
 		}
 	}()
 
@@ -107,24 +111,24 @@ func main() {
 		for {
 			resp, err := stream.Recv()
 			if err == io.EOF {
-				log.Printf("end of file received, closing")
+				l.Printf("end of file received, closing")
 				close(done)
 				return
 			}
 			if err != nil {
-				log.Fatalf("can not receive %v", err)
+				l.Fatalf("can not receive %v", err)
 			}
-			// TODO get back output here?
-			log.Printf("new output received? %x", resp)
+			if resp.Output != "" {
+				l.Printf("new output received: %s", resp.Output)
+			}
 		}
 	}()
 
 	// last goroutine closes done channel
-	// if context is done
 	go func() {
 		<-ctx.Done()
 	}()
 
 	<-done
-	log.Printf("finished with client request")
+	l.Printf("finished with client request")
 }

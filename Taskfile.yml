@@ -36,7 +36,6 @@ tasks:
       - ./bin/server &
       - sleep 1
       - ./bin/client
-      - sleep 1
   build:
     desc: build
     cmds:

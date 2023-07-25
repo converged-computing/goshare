@@ -16,4 +16,5 @@ message CommandResponse {
     int32 pid = 1;
     int32 returncode  = 2;
     string error = 3;
+    string output = 4;
 }
