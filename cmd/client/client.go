@@ -10,14 +10,11 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"net"
-	"os"
 	"time"
 
 	"github.com/converged-computing/goshare/internal/pb"
@@ -32,12 +29,19 @@ const (
 func main() {
 
 	sock := flag.String("s", "", "path to socket")
+	command := flag.String("c", "", "command")
 	flag.Parse()
 
 	// This won't work if the filesystem isn't shared heres
 	sockAddr := *sock
+	cmd := *command
 	if sockAddr == "" {
 		sockAddr = "/tmp/echo.sock"
+	}
+
+	// Testing command
+	if cmd == "" {
+		cmd = "echo hello world"
 	}
 
 	var (
@@ -72,42 +76,19 @@ func main() {
 	// Send & Recv
 	//
 	var (
-		client = pb.NewEchoClient(conn)
-		file   = func() *os.File {
-			f, err := os.Open("text-files/agatha_complete.txt")
-			if err != nil {
-				panic(err)
-			}
-			return f
-		}()
-		values = func(r io.ReadCloser) <-chan string {
-			ch := make(chan string)
-			go func() {
-				defer r.Close()
-				defer close(ch)
-				scanner := bufio.NewScanner(r)
-				for scanner.Scan() {
-					ch <- scanner.Text()
-				}
-			}()
-			return ch
-		}(file)
+		client = pb.NewCommandClient(conn)
 	)
 
-	for v := range values {
-		func() {
-			ctx, cancel := context.WithTimeout(mainCtx, 1*time.Second)
-			defer cancel()
+	func() {
+		ctx, cancel := context.WithTimeout(mainCtx, 1*time.Second)
+		defer cancel()
 
-			message := pb.EchoMessage{Data: v}
-
-			res, err := client.Echo(ctx, &message)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-
-			fmt.Println(res)
-		}()
-	}
+		message := pb.CommandRequest{Command: cmd}
+		res, err := client.Command(ctx, &message)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		fmt.Println(res)
+	}()
 }

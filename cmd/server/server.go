@@ -55,9 +55,9 @@ func main() {
 	}
 
 	server := grpc.NewServer()
-	echo := service.NewEchoService()
+	echo := service.NewCommandService()
 
-	pb.RegisterEchoServer(server, echo)
+	pb.RegisterCommandServer(server, echo)
 
 	server.Serve(listener)
 }
