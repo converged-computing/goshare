@@ -26,8 +26,6 @@ var (
 
 func main() {
 
-	// TODO how to do this now?
-	//	rand.NewRand(rand.NewSource(rand.Seed(time.Now().Unix())))
 	flag.StringVar(&sockAddr, "s", "/tmp/echo.sock", "path to socket")
 	flag.Parse()
 	listcmd := flag.Args()
@@ -39,8 +37,8 @@ func main() {
 
 	// Serialized as a string
 	cmd := strings.Join(listcmd, " ")
-	l.Printf("      socket path: %s", sockAddr)
-	l.Printf("requested command: %s", cmd)
+	l.Printf("socket path: %s\n", sockAddr)
+	l.Printf("requested command: %s\n", cmd)
 
 	// Connection options
 	var (
@@ -73,7 +71,7 @@ func main() {
 	done := make(chan bool)
 	var pid int32
 
-	// first goroutine sends command to stream, and expects a pid back
+	// first goroutine sends command to send command
 	go func() {
 
 		// The message includes the command (could eventually include other things)
@@ -81,46 +79,45 @@ func main() {
 		if err := stream.Send(&message); err != nil {
 			l.Fatalf("can not send %v", err)
 		}
-		l.Printf("%s sent command", message.Command)
+		l.Printf("sent command: %s\n", message.Command)
 
 		// Short sleep to get pid back
 		time.Sleep(time.Millisecond * 200)
 
-		// Expect to receive a pid back
-		resp, err := stream.Recv()
-		if err == io.EOF {
-			l.Printf("end of file received, closing")
-			close(done)
-			return
-		}
-		if err != nil {
-			l.Fatalf("can not receive %v", err)
-		}
-		pid = resp.Pid
-		l.Printf("new pid %d received", pid)
-
 		// Close our stream here
+		l.Printf("closing send\n")
 		if err := stream.CloseSend(); err != nil {
 			l.Println(err)
 		}
 	}()
 
-	// second goroutine expects a finished response back.
-	// if stream is finished it closes done channel
+	// second goroutine expects the pid and then output
 	go func() {
 		for {
+
+			// Expect to receive a pid back
 			resp, err := stream.Recv()
+
+			// We always get back a PID
+			pid = resp.Pid
+			l.Printf("pid %d is active\n", pid)
+
+			// If we are done, we close
+			if resp.Done == 1 {
+				l.Printf("new output received: %s", resp.Output)
+				l.Printf("process is done, closing\n")
+				close(done)
+				return
+			}
+			if err != nil {
+				l.Fatalf("can not receive %v\n", err)
+			}
 			if err == io.EOF {
 				l.Printf("end of file received, closing")
 				close(done)
 				return
 			}
-			if err != nil {
-				l.Fatalf("can not receive %v", err)
-			}
-			if resp.Output != "" {
-				l.Printf("new output received: %s", resp.Output)
-			}
+			time.Sleep(time.Millisecond * 200)
 		}
 	}()
 

@@ -50,6 +50,10 @@ task protoc
 ```bash
 task build
 ```
+```console
+task: [build] go build -o bin/server cmd/server/server.go
+task: [build] go build -o bin/client cmd/client/client.go
+```
 
 These are generated in [bin](bin)
 
@@ -58,16 +62,32 @@ These are generated in [bin](bin)
 ```sh
 task run
 ```
+```console
+task: [run] ./bin/server &
+task: [run] sleep 1
+task: [run] ./bin/client
+🟪️  client: 2023/07/25 15:57:16 client.go:40: socket path: /tmp/echo.sock
+🟪️  client: 2023/07/25 15:57:16 client.go:41: requested command: echo hello world
+🟪️  client: 2023/07/25 15:57:16 client.go:82: sent command: echo hello world
+🟦️ service: 2023/07/25 15:57:16 command.go:26: start new stream request
+🟦️ service: 2023/07/25 15:57:16 command.go:54: Received command echo hello world
+🟦️ service: 2023/07/25 15:57:16 command.go:67: send new pid=461564
+🟦️ service: 2023/07/25 15:57:16 command.go:70: Process started with PID: 461564
+🟦️ service: 2023/07/25 15:57:16 command.go:75: send final output: hello world
+🟪️  client: 2023/07/25 15:57:16 client.go:103: pid 461564 is active
+🟪️  client: 2023/07/25 15:57:16 client.go:88: closing send
+🟪️  client: 2023/07/25 15:57:16 client.go:103: pid 461564 is active
+🟪️  client: 2023/07/25 15:57:16 client.go:107: new output received: hello world
+🟪️  client: 2023/07/25 15:57:16 client.go:108: process is done, closing
+🟪️  client: 2023/07/25 15:57:16 client.go:130: finished with client request
+```
 
 ## TODO next
 
-- add background workers to handle waiting for task after run
-- add more fields to proto for pid, retval (if it didn't work), and command?
-- add subcommands to client to run / cancel
+- add subcommands to client to run / cancel?
 - ensure we check for executable first
  - should be table of values that indicate what happened
 - test run with a sleep command, then cancel
-- then need a way to get output / status based on pid without polling...
 - try making a release we can install to a dummy jobset with a flux container and go + application
 
 ## References

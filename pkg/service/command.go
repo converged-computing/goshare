@@ -9,7 +9,6 @@ import (
 
 	"github.com/converged-computing/goshare/internal/pb"
 	"github.com/converged-computing/goshare/lib/command"
-	_ "google.golang.org/grpc"
 )
 
 type Server struct {
@@ -73,8 +72,9 @@ func (s Server) Command(srv pb.Stream_CommandServer) error {
 
 			// Update the res with the output
 			output := wrapper.Builder.String()
-			l.Printf("Output: %s", output)
+			l.Printf("send final output: %s", output)
 			res.Output = output
+			res.Done = 1
 
 			if err != nil {
 				l.Printf("Error waiting for command: %v\n", err)

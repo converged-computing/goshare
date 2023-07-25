@@ -17,4 +17,5 @@ message CommandResponse {
     int32 returncode  = 2;
     string error = 3;
     string output = 4;
+    int32 done = 5;
 }

@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/converged-computing/goshare/internal/pb"
-	"github.com/converged-computing/goshare/internal/service"
+	"github.com/converged-computing/goshare/pkg/service"
 	"google.golang.org/grpc"
 )
 
