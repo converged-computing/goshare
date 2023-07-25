@@ -5,8 +5,8 @@ import (
 	"flag"
 	"io"
 	"log"
-	"math/rand"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/converged-computing/goshare/internal/pb"
@@ -18,28 +18,27 @@ const (
 	protocol = "unix"
 )
 
+var sockAddr string
+
 func main() {
 
-	rand.Seed(time.Now().Unix())
-	sock := flag.String("s", "", "path to socket")
-	command := flag.String("c", "", "command")
+	// TODO how to do this now?
+	//	rand.NewRand(rand.NewSource(rand.Seed(time.Now().Unix())))
+	flag.StringVar(&sockAddr, "s", "/tmp/echo.sock", "path to socket")
 	flag.Parse()
-
-	// This won't work if the filesystem isn't shared heres
-	sockAddr := *sock
-	cmd := *command
-	if sockAddr == "" {
-		sockAddr = "/tmp/echo.sock"
-	}
+	listcmd := flag.Args()
 
 	// Testing command
-	if cmd == "" {
-		cmd = "echo hello world"
+	if len(listcmd) == 0 {
+		listcmd = []string{"echo", "hello", "world"}
 	}
 
-	//
-	// Connect
-	//
+	// Serialized as a string
+	cmd := strings.Join(listcmd, " ")
+	log.Printf("      socket path: %s", sockAddr)
+	log.Printf("requested command: %s", cmd)
+
+	// Connection options
 	var (
 		credentials = insecure.NewCredentials() // No SSL/TLS
 		dialer      = func(ctx context.Context, addr string) (net.Conn, error) {
@@ -62,6 +61,9 @@ func main() {
 	// Send and receive, providing the command, until we close
 	client := pb.NewStreamClient(conn)
 	stream, err := client.Command(context.Background())
+	if err != nil {
+		log.Fatalf("can not issue command to stream client %v", err)
+	}
 
 	ctx := stream.Context()
 	done := make(chan bool)
@@ -75,7 +77,7 @@ func main() {
 		if err := stream.Send(&message); err != nil {
 			log.Fatalf("can not send %v", err)
 		}
-		log.Printf("%d sent command", message.Command)
+		log.Printf("%s sent command", message.Command)
 
 		// Short sleep to get pid back
 		time.Sleep(time.Millisecond * 200)
@@ -83,6 +85,7 @@ func main() {
 		// Expect to receive a pid back
 		resp, err := stream.Recv()
 		if err == io.EOF {
+			log.Printf("end of file received, closing")
 			close(done)
 			return
 		}
@@ -100,31 +103,28 @@ func main() {
 
 	// second goroutine expects a finished response back.
 	// if stream is finished it closes done channel
-	/*go func() {
+	go func() {
 		for {
 			resp, err := stream.Recv()
 			if err == io.EOF {
+				log.Printf("end of file received, closing")
 				close(done)
 				return
 			}
 			if err != nil {
 				log.Fatalf("can not receive %v", err)
 			}
-			pid := resp.Result
-			log.Printf("new max %d received", pid)
+			// TODO get back output here?
+			log.Printf("new output received? %x", resp)
 		}
-	}()*/
+	}()
 
 	// last goroutine closes done channel
 	// if context is done
 	go func() {
 		<-ctx.Done()
-		if err := ctx.Err(); err != nil {
-			log.Println(err)
-		}
-		close(done)
 	}()
 
 	<-done
-	log.Printf("finished with pid=%d", pid)
+	log.Printf("finished with client request")
 }

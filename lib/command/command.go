@@ -40,7 +40,7 @@ func RunInteractive(cmd []string, env []string) error {
 }
 
 // Run a background process and return the PID
-func RunDetachedCommand(cmd []string, env []string) (int, error) {
+func RunDetachedCommand(cmd []string, env []string) (*exec.Cmd, error) {
 
 	Cmd := exec.Command(cmd[0], cmd[1:]...)
 	Cmd.Env = os.Environ()
@@ -49,10 +49,11 @@ func RunDetachedCommand(cmd []string, env []string) (int, error) {
 	Cmd.Stdout = os.Stdout
 	err := Cmd.Start()
 	if err != nil {
-		return -1, err
+		log.Printf("Error running subprocess %d\n", Cmd.Process.Pid)
+		return Cmd, err
 	}
 	log.Printf("Just ran subprocess %d, exiting\n", Cmd.Process.Pid)
-	return Cmd.Process.Pid, nil
+	return Cmd, nil
 }
 
 // RunCommand runs one command and returs an error, output, and error

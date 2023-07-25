@@ -1,7 +1,7 @@
 version: "3"
 
 tasks:
-  install-requirements:
+  install:
     desc: install requirements
     cmds:
       - mkdir tmp
@@ -35,9 +35,8 @@ tasks:
     cmds:
       - ./bin/server &
       - sleep 1
-      - ./bin/client &
+      - ./bin/client
       - sleep 1
-      - pkill server
   build:
     desc: build
     cmds:

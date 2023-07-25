@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os/exec"
 	"strings"
 
 	"github.com/converged-computing/goshare/internal/pb"
@@ -49,7 +50,7 @@ func (s Server) Command(srv pb.Stream_CommandServer) error {
 			log.Printf("Received command %s", req.Command)
 
 			// Run the command and return a response back
-			res, err := runCommand(req)
+			res, cmd, err := runCommand(req)
 			if err != nil {
 
 				// TODO custom logic here...
@@ -62,13 +63,23 @@ func (s Server) Command(srv pb.Stream_CommandServer) error {
 				log.Printf("sending back response error %v", err)
 			}
 			log.Printf("send new pid=%d", res.Pid)
+
+			// Wait for the command to finish and return done!
+			log.Printf("Process started with PID: %d\n", cmd.Process.Pid)
+			err = cmd.Wait()
+			if err != nil {
+				fmt.Printf("Error waiting for command: %v\n", err)
+			}
+			return ctx.Err()
 		}
 	}
 }
 
 // Service endpoint to receive a command, execute, and return the pid
-func runCommand(message *pb.CommandRequest) (*pb.CommandResponse, error) {
-	pid, err := command.RunDetachedCommand(strings.Split(message.Command, " "), []string{})
+func runCommand(message *pb.CommandRequest) (*pb.CommandResponse, *exec.Cmd, error) {
+
+	// This returns back the command so we can get the pid, wait on it, etc.
+	cmd, err := command.RunDetachedCommand(strings.Split(message.Command, " "), []string{})
 	var r pb.CommandResponse
 	if err != nil {
 		errorPid := int32(-1)
@@ -79,10 +90,10 @@ func runCommand(message *pb.CommandRequest) (*pb.CommandResponse, error) {
 		}
 	} else {
 		r = pb.CommandResponse{
-			Pid:        int32(pid),
+			Pid:        int32(cmd.Process.Pid),
 			Error:      "",
 			Returncode: int32(0),
 		}
 	}
-	return &r, nil
+	return &r, cmd, nil
 }
