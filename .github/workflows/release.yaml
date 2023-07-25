@@ -1,0 +1,47 @@
+name: shpc tag and release
+
+on:
+  # On demand releases
+  workflow_dispatch:
+
+  # Testing only
+  pull_request: []
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set tag
+        run: |
+          today=$(printf '%(%Y-%m)T\n' -1)
+          echo $today
+          echo "tag=${today}" >> ${GITHUB_ENV}
+
+      - uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ^1.20
+      - name: Install task
+        run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+      - name: Install dependencies
+        run: |
+          export PATH=$PWD/bin:$PATH
+          task install
+          task build
+          task run
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: goshare ${{ env.tag }}
+          tag_name: ${{ env.tag }}
+          body: "goshare release ${{ env.tag }}"
+          files: |
+            bin/server
+            bin/client
+        env:
+          GITHUB_REPOSITORY: converged-computing/goshare
