@@ -1,19 +1,11 @@
-// gRPC with Unix Domain Socket example (client side)
-//
-// # REFERENCES
-// 	- https://qiita.com/marnie_ms4/items/4582a1a0db363fe246f3
-// 	- http://yamahiro0518.hatenablog.com/entry/2016/02/01/215908
-// 	- https://zenn.dev/hsaki/books/golang-grpc-starting/viewer/client
-// 	- https://stackoverflow.com/a/46279623
-// 	- https://stackoverflow.com/a/18479916
-
 package main
 
 import (
 	"context"
 	"flag"
-	"fmt"
+	"io"
 	"log"
+	"math/rand"
 	"net"
 	"time"
 
@@ -28,6 +20,7 @@ const (
 
 func main() {
 
+	rand.Seed(time.Now().Unix())
 	sock := flag.String("s", "", "path to socket")
 	command := flag.String("c", "", "command")
 	flag.Parse()
@@ -43,12 +36,6 @@ func main() {
 	if cmd == "" {
 		cmd = "echo hello world"
 	}
-
-	var (
-		rootCtx          = context.Background()
-		mainCtx, mainCxl = context.WithCancel(rootCtx)
-	)
-	defer mainCxl()
 
 	//
 	// Connect
@@ -72,23 +59,72 @@ func main() {
 	}
 	defer conn.Close()
 
-	//
-	// Send & Recv
-	//
-	var (
-		client = pb.NewCommandClient(conn)
-	)
+	// Send and receive, providing the command, until we close
+	client := pb.NewStreamClient(conn)
+	stream, err := client.Command(context.Background())
 
-	func() {
-		ctx, cancel := context.WithTimeout(mainCtx, 1*time.Second)
-		defer cancel()
+	ctx := stream.Context()
+	done := make(chan bool)
+	var pid int32
 
+	// first goroutine sends command to stream, and expects a pid back
+	go func() {
+
+		// The message includes the command (could eventually include other things)
 		message := pb.CommandRequest{Command: cmd}
-		res, err := client.Command(ctx, &message)
-		if err != nil {
-			log.Println(err)
+		if err := stream.Send(&message); err != nil {
+			log.Fatalf("can not send %v", err)
+		}
+		log.Printf("%d sent command", message.Command)
+
+		// Short sleep to get pid back
+		time.Sleep(time.Millisecond * 200)
+
+		// Expect to receive a pid back
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			close(done)
 			return
 		}
-		fmt.Println(res)
+		if err != nil {
+			log.Fatalf("can not receive %v", err)
+		}
+		pid = resp.Pid
+		log.Printf("new pid %d received", pid)
+
+		// Close our stream here
+		if err := stream.CloseSend(); err != nil {
+			log.Println(err)
+		}
 	}()
+
+	// second goroutine expects a finished response back.
+	// if stream is finished it closes done channel
+	/*go func() {
+		for {
+			resp, err := stream.Recv()
+			if err == io.EOF {
+				close(done)
+				return
+			}
+			if err != nil {
+				log.Fatalf("can not receive %v", err)
+			}
+			pid := resp.Result
+			log.Printf("new max %d received", pid)
+		}
+	}()*/
+
+	// last goroutine closes done channel
+	// if context is done
+	go func() {
+		<-ctx.Done()
+		if err := ctx.Err(); err != nil {
+			log.Println(err)
+		}
+		close(done)
+	}()
+
+	<-done
+	log.Printf("finished with pid=%d", pid)
 }

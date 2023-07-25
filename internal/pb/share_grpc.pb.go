@@ -19,89 +19,121 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Command_Command_FullMethodName = "/share.Command/Command"
+	Stream_Command_FullMethodName = "/share.Stream/Command"
 )
 
-// CommandClient is the client API for Command service.
+// StreamClient is the client API for Stream service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type CommandClient interface {
-	Command(ctx context.Context, in *CommandRequest, opts ...grpc.CallOption) (*CommandResponse, error)
+type StreamClient interface {
+	Command(ctx context.Context, opts ...grpc.CallOption) (Stream_CommandClient, error)
 }
 
-type commandClient struct {
+type streamClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewCommandClient(cc grpc.ClientConnInterface) CommandClient {
-	return &commandClient{cc}
+func NewStreamClient(cc grpc.ClientConnInterface) StreamClient {
+	return &streamClient{cc}
 }
 
-func (c *commandClient) Command(ctx context.Context, in *CommandRequest, opts ...grpc.CallOption) (*CommandResponse, error) {
-	out := new(CommandResponse)
-	err := c.cc.Invoke(ctx, Command_Command_FullMethodName, in, out, opts...)
+func (c *streamClient) Command(ctx context.Context, opts ...grpc.CallOption) (Stream_CommandClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Stream_ServiceDesc.Streams[0], Stream_Command_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &streamCommandClient{stream}
+	return x, nil
 }
 
-// CommandServer is the server API for Command service.
-// All implementations should embed UnimplementedCommandServer
-// for forward compatibility
-type CommandServer interface {
-	Command(context.Context, *CommandRequest) (*CommandResponse, error)
+type Stream_CommandClient interface {
+	Send(*CommandRequest) error
+	Recv() (*CommandResponse, error)
+	grpc.ClientStream
 }
 
-// UnimplementedCommandServer should be embedded to have forward compatible implementations.
-type UnimplementedCommandServer struct {
+type streamCommandClient struct {
+	grpc.ClientStream
 }
 
-func (UnimplementedCommandServer) Command(context.Context, *CommandRequest) (*CommandResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Command not implemented")
+func (x *streamCommandClient) Send(m *CommandRequest) error {
+	return x.ClientStream.SendMsg(m)
 }
 
-// UnsafeCommandServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to CommandServer will
-// result in compilation errors.
-type UnsafeCommandServer interface {
-	mustEmbedUnimplementedCommandServer()
-}
-
-func RegisterCommandServer(s grpc.ServiceRegistrar, srv CommandServer) {
-	s.RegisterService(&Command_ServiceDesc, srv)
-}
-
-func _Command_Command_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CommandRequest)
-	if err := dec(in); err != nil {
+func (x *streamCommandClient) Recv() (*CommandResponse, error) {
+	m := new(CommandResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(CommandServer).Command(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Command_Command_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommandServer).Command(ctx, req.(*CommandRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
-// Command_ServiceDesc is the grpc.ServiceDesc for Command service.
+// StreamServer is the server API for Stream service.
+// All implementations should embed UnimplementedStreamServer
+// for forward compatibility
+type StreamServer interface {
+	Command(Stream_CommandServer) error
+}
+
+// UnimplementedStreamServer should be embedded to have forward compatible implementations.
+type UnimplementedStreamServer struct {
+}
+
+func (UnimplementedStreamServer) Command(Stream_CommandServer) error {
+	return status.Errorf(codes.Unimplemented, "method Command not implemented")
+}
+
+// UnsafeStreamServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to StreamServer will
+// result in compilation errors.
+type UnsafeStreamServer interface {
+	mustEmbedUnimplementedStreamServer()
+}
+
+func RegisterStreamServer(s grpc.ServiceRegistrar, srv StreamServer) {
+	s.RegisterService(&Stream_ServiceDesc, srv)
+}
+
+func _Stream_Command_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(StreamServer).Command(&streamCommandServer{stream})
+}
+
+type Stream_CommandServer interface {
+	Send(*CommandResponse) error
+	Recv() (*CommandRequest, error)
+	grpc.ServerStream
+}
+
+type streamCommandServer struct {
+	grpc.ServerStream
+}
+
+func (x *streamCommandServer) Send(m *CommandResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *streamCommandServer) Recv() (*CommandRequest, error) {
+	m := new(CommandRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// Stream_ServiceDesc is the grpc.ServiceDesc for Stream service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Command_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "share.Command",
-	HandlerType: (*CommandServer)(nil),
-	Methods: []grpc.MethodDesc{
+var Stream_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "share.Stream",
+	HandlerType: (*StreamServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "Command",
-			Handler:    _Command_Command_Handler,
+			StreamName:    "Command",
+			Handler:       _Stream_Command_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "proto/share.proto",
 }

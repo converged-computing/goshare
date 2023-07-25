@@ -3,8 +3,9 @@ syntax = "proto3";
 package share;
 option go_package = "internal/pb";
 
-service Command {
-    rpc Command (CommandRequest) returns (CommandResponse) {}
+// A StreamCommand can handle sending back and forth until completion
+service Stream {
+  rpc Command (stream CommandRequest) returns (stream CommandResponse) {}
 }
 
 message CommandRequest {
@@ -13,5 +14,6 @@ message CommandRequest {
 
 message CommandResponse {
     int32 pid = 1;
+    int32 returncode  = 2;
+    string error = 3;
 }
-

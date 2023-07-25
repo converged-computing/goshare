@@ -12,10 +12,10 @@ At this point, we can run the producer as many times as needed, providing a comm
  - Provide the pid back to the producer
  - The producer then needs to somehow watch this PID for it to complete (likely with some API that uses ps, need to think about this more because we don't want to be polling)
 
-I am starting from [this example](https://github.com/converged-computing/goshare) with an MIT license, included in [.github](.github).
+I am starting from [this example](https://github.com/devlights/go-grpc-uds-example/tree/master) with an MIT license, included in [.github](.github).
 I need creative terminology for producer and consumer, so I'm stil thinking about this. Right now, client and server is probably logical
 for a listener and message sender! I'm first going to test this small app (to make sure it works) and then I'll work on customizing it
-for submitting jobs.
+for submitting jobs. I am reading that we should set `GOMAXPROCS` to be the number of concurrent jobs we will allow.
 
 ## Setup
 
@@ -58,6 +58,38 @@ These are generated in [bin](bin)
 ```sh
 task run
 ```
+
+## TODO next
+
+- add background workers to handle waiting for task after run
+- add more fields to proto for pid, retval (if it didn't work), and command?
+- add subcommands to client to run / cancel
+- ensure we check for executable first
+ - should be table of values that indicate what happened
+- test run with a sleep command, then cancel
+- then need a way to get output / status based on pid without polling...
+- try making a release we can install to a dummy jobset with a flux container and go + application
+
+## References
+
+### gRPC with Unix Domain Socket example (server side)
+
+ - https://github.com/pahanini/go-grpc-bidirectional-streaming-example
+ - https://qiita.com/marnie_ms4/items/4582a1a0db363fe246f3
+ - http://yamahiro0518.hatenablog.com/entry/2016/02/01/215908
+ - https://zenn.dev/hsaki/books/golang-grpc-starting/viewer/client
+ - https://stackoverflow.com/a/46279623
+ - https://stackoverflow.com/a/18479916
+ - https://qiita.com/hnakamur/items/848097aad846d40ae84b
+
+### gRPC with Unix Domain Socket example (client side)
+
+ - https://github.com/pahanini/go-grpc-bidirectional-streaming-example
+ - https://qiita.com/marnie_ms4/items/4582a1a0db363fe246f3
+ - http://yamahiro0518.hatenablog.com/entry/2016/02/01/215908
+ - https://zenn.dev/hsaki/books/golang-grpc-starting/viewer/client
+ - https://stackoverflow.com/a/46279623
+ - https://stackoverflow.com/a/18479916
 
 ## License
 
