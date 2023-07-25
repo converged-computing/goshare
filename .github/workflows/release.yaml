@@ -1,4 +1,4 @@
-name: shpc tag and release
+name: goshare tag and release
 
 on:
   # On demand releases
