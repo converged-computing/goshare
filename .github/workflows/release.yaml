@@ -4,9 +4,6 @@ on:
   # On demand releases
   workflow_dispatch:
 
-  # Testing only
-  pull_request: []
-
 jobs:
   release:
     runs-on: ubuntu-latest
