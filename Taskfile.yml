@@ -1,0 +1,46 @@
+version: "3"
+
+tasks:
+  install-requirements:
+    desc: install requirements
+    cmds:
+      - mkdir tmp
+      - task: _download-protoc
+      - task: _unzip-protoc
+      - mkdir -p bin
+      - rm -rf bin/protoc
+      - task: _locate-protoc
+      - rm -rf ./tmp
+      - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+      - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+      - rm -rf ./text-files; git clone --quiet https://github.com/devlights/text-files
+  _download-protoc:
+    dir: tmp
+    cmds:
+      - curl -L https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip --output protoc.zip
+  _unzip-protoc:
+    dir: tmp
+    cmds:
+      - unzip ./protoc.zip -d protoc
+  _locate-protoc:
+    dir: tmp
+    cmds:
+      - mv -f ./protoc/ ../bin
+  protoc:
+    desc: gen protoc
+    cmds:
+      - mkdir -p internal
+      - bin/protoc/bin/protoc --go_out=. --go-grpc_out=require_unimplemented_servers=false:. proto/*.proto
+  run:
+    desc: run
+    cmds:
+      - ./bin/server &
+      - sleep 1
+      - ./bin/client &
+      - sleep 1
+      - pkill server
+  build:
+    desc: build
+    cmds:
+      - go build -o bin/server cmd/server/server.go
+      - go build -o bin/client cmd/client/client.go
