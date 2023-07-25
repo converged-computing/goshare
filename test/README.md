@@ -105,7 +105,6 @@ client -s /proc/41/root/dinosaur.sock sleep 10
 🟪️  client: 2023/07/25 22:59:11 client.go:88: closing send
 # Note there was a delay / wait here while the command was running
 🟪️  client: 2023/07/25 22:59:21 client.go:103: pid 73 is active
-🟪️  client: 2023/07/25 22:59:21 client.go:107: new output received: 
 🟪️  client: 2023/07/25 22:59:21 client.go:108: process is done, closing
 🟪️  client: 2023/07/25 22:59:21 client.go:130: finished with client request
 ```
@@ -117,10 +116,10 @@ And the server also updated.
 🟦️ service: 2023/07/25 22:59:11 command.go:54: Received command sleep 10
 🟦️ service: 2023/07/25 22:59:11 command.go:67: send new pid=73
 🟦️ service: 2023/07/25 22:59:11 command.go:70: Process started with PID: 73
-🟦️ service: 2023/07/25 22:59:21 command.go:75: send final output: 
 ```
 
-That's it for this demo! Next we likely want to get a basic example running with Flux,
+The main difference for the second run is that we don't see output.
+And that's it for this demo! Next we likely want to get a basic example running with Flux,
 and then figure out how to automate the original process to get the server PID. Likely
 we can have the flux run command (that will issue a command to the client) wait until it sees
 a process running with a particular name.  When you are done, exit and clean up.
