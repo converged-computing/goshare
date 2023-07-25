@@ -72,7 +72,9 @@ func (s Server) Command(srv pb.Stream_CommandServer) error {
 
 			// Update the res with the output
 			output := wrapper.Builder.String()
-			l.Printf("send final output: %s", output)
+			if output != "" {
+				l.Printf("send final output: %s", output)
+			}
 			res.Output = output
 			res.Done = 1
 

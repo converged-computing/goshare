@@ -104,7 +104,9 @@ func main() {
 
 			// If we are done, we close
 			if resp.Done == 1 {
-				l.Printf("new output received: %s", resp.Output)
+				if resp.Output != "" {
+					l.Printf("new output received: %s", resp.Output)
+				}
 				l.Printf("process is done, closing\n")
 				close(done)
 				return
