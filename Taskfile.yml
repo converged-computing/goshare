@@ -39,5 +39,5 @@ tasks:
   build:
     desc: build
     cmds:
-      - go build -o bin/server cmd/server/server.go
-      - go build -o bin/client cmd/client/client.go
+      - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/server cmd/server/server.go
+      - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/client cmd/client/client.go

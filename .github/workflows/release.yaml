@@ -13,7 +13,7 @@ jobs:
 
       - name: Set tag
         run: |
-          today=$(printf '%(%Y-%m)T\n' -1)
+          today=$(printf '%(%Y-%m-%d)T\n' -1)
           echo $today
           echo "tag=${today}" >> ${GITHUB_ENV}
 
