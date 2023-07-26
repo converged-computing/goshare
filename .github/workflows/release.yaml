@@ -3,6 +3,10 @@ name: goshare tag and release
 on:
   # On demand releases
   workflow_dispatch:
+    inputs:
+      name:
+        type: tag
+        description: Custom tag for release
 
 jobs:
   release:
@@ -12,10 +16,18 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set tag
+        env:
+          tag: ${{ inputs.tag }}
         run: |
-          today=$(printf '%(%Y-%m-%d)T\n' -1)
-          echo $today
-          echo "tag=${today}" >> ${GITHUB_ENV}
+          if [[ "${tag}" == "" ]]; then
+            today=$(printf '%(%Y-%m-%d)T\n' -1)
+            echo $today
+            echo "Tag for release is ${today}"
+            echo "tag=${today}" >> ${GITHUB_ENV}
+         else
+            echo "Tag for release is ${tag}"
+            echo "tag=${tag}" >> ${GITHUB_ENV}         
+         fi
 
       - uses: actions/checkout@v3
       - name: Setup Go
