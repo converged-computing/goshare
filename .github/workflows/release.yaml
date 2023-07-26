@@ -4,8 +4,7 @@ on:
   # On demand releases
   workflow_dispatch:
     inputs:
-      name:
-        type: tag
+      tag:
         description: Custom tag for release
 
 jobs:
