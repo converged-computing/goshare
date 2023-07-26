@@ -14,7 +14,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
       - name: Set tag
         env:
           tag: ${{ inputs.tag }}
@@ -28,7 +27,6 @@ jobs:
             echo "Tag for release is ${tag}"
             echo "tag=${tag}" >> ${GITHUB_ENV}         
          fi
-
       - uses: actions/checkout@v3
       - name: Setup Go
         uses: actions/setup-go@v3
@@ -42,7 +40,6 @@ jobs:
           task install
           task build
           task run
-
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
