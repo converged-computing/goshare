@@ -95,7 +95,7 @@ func (s Server) Command(srv pb.Stream_CommandServer) error {
 func runCommand(message *pb.CommandRequest) (*pb.CommandResponse, command.CommandWrapper, error) {
 
 	// This returns back the command so we can get the pid, wait on it, etc.
-	wrapper, err := command.RunDetachedCommand(strings.Split(message.Command, " "), []string{})
+	wrapper, err := command.RunDetachedCommand(strings.Split(message.Command, " "), []string{}, message.Workdir)
 	var r pb.CommandResponse
 	if err != nil {
 		errorPid := int32(-1)
