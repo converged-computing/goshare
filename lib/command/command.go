@@ -45,12 +45,16 @@ func RunInteractive(command []string, env []string) error {
 }
 
 // Run a background process and return the command, response buffers, and any error
-func RunDetachedCommand(command []string, env []string) (CommandWrapper, error) {
+func RunDetachedCommand(command []string, env []string, workdir string) (CommandWrapper, error) {
 
 	cmd, builder := exec.Command(command[0], command[1:]...), new(strings.Builder)
 	cmd.Env = os.Environ()
 	cmd.Stdout = builder
 
+	// Set the working directory, if defined
+	if workdir != "" {
+		cmd.Dir = workdir
+	}
 	res := CommandWrapper{
 		Command: cmd,
 		Builder: builder,

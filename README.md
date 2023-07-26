@@ -17,6 +17,49 @@ I need creative terminology for producer and consumer, so I'm stil thinking abou
 for a listener and message sender! I'm first going to test this small app (to make sure it works) and then I'll work on customizing it
 for submitting jobs. I am reading that we should set `GOMAXPROCS` to be the number of concurrent jobs we will allow.
 
+## Usage
+
+### Server
+
+You will generally want to start a server. You can either run it as a background
+process or use `ps aux` from another terminal (or container with shared process namespace)
+to see the PID.
+
+```bash
+./bin/server
+```
+
+To specify a different unix socket to use:
+
+```bash
+./bin/server -s /dinosaur.sock
+```
+
+See all options (there are few!)
+
+```bash
+./bin/server --help
+```
+
+If you leave out the socket, it by default will be written to '/tmp/goshare.sock'.
+The same is true for the client, discussed next.
+
+### Client
+
+The client should connect to the same unix socket as the server for proper communication!
+
+```bash
+./bin/client -s /dinosaur.sock <command>
+```
+
+Since the jobs are run possibly on a different system, you can also define the working directory.
+
+```bash
+./bin/client -w /working/directory <command>
+```
+
+If you leave out a command, a dummy "echo hello world" is used for a test. 
+
 ## Setup
 
 We are going to use [go-task](https://taskfile.dev/) over a Makefile. To install, [download a release](https://github.com/go-task/task/releases) and I installed with dpkg.

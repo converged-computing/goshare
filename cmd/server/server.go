@@ -24,7 +24,7 @@ func main() {
 	// This won't work if the filesystem isn't shared heres
 	sockAddr := *sock
 	if sockAddr == "" {
-		sockAddr = "/tmp/echo.sock"
+		sockAddr = "/tmp/goshare.sock"
 	}
 
 	if *help {

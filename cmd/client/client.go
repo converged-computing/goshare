@@ -21,12 +21,14 @@ const (
 
 var (
 	l               = log.New(os.Stderr, "🟪️  client: ", log.Ldate|log.Ltime|log.Lshortfile)
-	sockAddr string = "/tmp/echo.sock"
+	sockAddr string = "/tmp/goshare.sock"
+	workdir  string = "/tmp"
 )
 
 func main() {
 
-	flag.StringVar(&sockAddr, "s", "/tmp/echo.sock", "path to socket")
+	flag.StringVar(&sockAddr, "s", "/tmp/goshare.sock", "path to socket")
+	flag.StringVar(&workdir, "w", "", "working directory to run job")
 	flag.Parse()
 	listcmd := flag.Args()
 
@@ -75,7 +77,7 @@ func main() {
 	go func() {
 
 		// The message includes the command (could eventually include other things)
-		message := pb.CommandRequest{Command: cmd}
+		message := pb.CommandRequest{Command: cmd, Workdir: workdir}
 		if err := stream.Send(&message); err != nil {
 			l.Fatalf("can not send %v", err)
 		}

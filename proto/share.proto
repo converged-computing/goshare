@@ -10,6 +10,7 @@ service Stream {
 
 message CommandRequest {
     string command = 1;
+    string workdir = 2;
 }
 
 message CommandResponse {
