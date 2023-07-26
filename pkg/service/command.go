@@ -23,7 +23,7 @@ var (
 // Command is a service Endpoint for a streaming (more interactive) response
 func (s Server) Command(srv pb.Stream_CommandServer) error {
 
-	l.Println("start new stream request")
+	l.Printf("start new stream request\n")
 	ctx := srv.Context()
 
 	for {
