@@ -1,0 +1,94 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: goshare-configmap
+data:
+  server-entrypoint.sh: |-
+    #!/bin/bash
+    wget https://github.com/converged-computing/goshare/releases/download/2023-07-26-rc2/server
+    chmod +x ./server
+    mv ./server /bin/goshare-srv
+    exec goshare-srv -s /dinosaur.sock
+  client-entrypoint.sh: |-
+    #!/bin/bash
+    apt-get update && apt-get install -y jq
+    wget https://github.com/converged-computing/goshare/releases/download/2023-07-26-rc2/client
+    chmod +x ./client
+    mv ./client /bin/goshare-cli
+
+    # This block ensures we have the pid of the running client before continuing
+    sleep 10
+    while true
+      do
+        echo "Looking for PID for goshare-srv"
+        pid=$(ps aux | grep -i "goshare-srv -s /dinosaur.sock" | grep -Eiv "flux_operator" | grep -Eiv "grep" | awk -v OFS=, '{print $1, $2}' |  head -n 1 | jq -R 'split(",") | {user: .[0], pid: .[1]}' | jq -r .pid)
+        if [[ "${pid}" != "" ]]; then
+          echo "Found PID ${pid} for goshare-srv"
+          break
+        fi
+        sleep 3
+    done
+
+    # Keep this around if we want it
+    echo "${pid}" > /goshare.pid
+    export GOSHARE_PID=$pid
+
+    # Extra sleep to allow socket to start first
+    sleep 10
+
+    # This works running outside of flux
+    echo "Running hello world"
+    goshare-cli -s /proc/$GOSHARE_PID/root/dinosaur.sock echo hello world
+
+    echo "Running lammps"
+    goshare-cli -s /proc/$GOSHARE_PID/root/dinosaur.sock mpirun lmp -v x 1 -v y 1 -v z 1 -in in.reaxc.hns -nocite
+---
+apiVersion: jobset.x-k8s.io/v1alpha2
+kind: JobSet
+metadata:
+  name: goshare
+spec:
+  replicatedJobs:
+  - name: workers
+    template:
+      spec:
+        parallelism: 2
+        completions: 2
+        backoffLimit: 0
+        template:
+          spec:
+            shareProcessNamespace: true            
+            containers:
+
+            # The server will start the main process to listen for commands
+            - name: server
+              image: ghcr.io/rse-ops/vanilla-lammps:tag-latest
+              command:
+                - /bin/entrypoint.sh
+              volumeMounts:
+              - name: configmap-volume
+                mountPath: /bin/entrypoint.sh
+                readOnly: true
+                subPath: server-entrypoint.sh
+
+            # The client needs to be able to read the server fs
+            - name: client
+              image: golang:1.20
+              command:
+                - /bin/entrypoint.sh
+              securityContext:
+                capabilities:
+                  add:
+                    - SYS_PTRACE
+              volumeMounts:
+              - name: configmap-volume
+                mountPath: /bin/entrypoint.sh
+                readOnly: true
+                subPath: client-entrypoint.sh
+
+            volumes:
+             - name: configmap-volume
+               configMap:
+                 defaultMode: 0700
+                 name: goshare-configmap
