@@ -40,5 +40,6 @@ jobs:
           files: |
             bin/server
             bin/client
+            bin/wait
         env:
           GITHUB_REPOSITORY: converged-computing/goshare

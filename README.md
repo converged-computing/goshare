@@ -60,6 +60,37 @@ Since the jobs are run possibly on a different system, you can also define the w
 
 If you leave out a command, a dummy "echo hello world" is used for a test. 
 
+### Wait
+
+The wait executable is intended to take a command or full path to an executable, and return the PID. It will wait (and loop) until it finds a match.
+As an example, here is with full verbosity:
+
+```bash
+$ ./bin/wait -c "/usr/libexec/gvfsd-recent --spawner :1.2 /org/gtk/gvfs/exec_spaw/5" 
+```
+```console
+🟧️  wait: 2023/07/27 23:44:30 wait.go:38: /usr/libexec/gvfsd-recent --spawner :1.2 /org/gtk/gvfs/exec_spaw/5
+🟧️  wait: 2023/07/27 23:44:30 wait.go:64: Found matched command /usr/libexec/gvfsd-recent --spawner :1.2 /org/gtk/gvfs/exec_spaw/5 with pid 4013899
+4013899
+```
+
+We can run in quiet mode (only print out the final PID):
+
+```bash
+./bin/wait -c "/usr/libexec/gvfsd-recent --spawner :1.2 /org/gtk/gvfs/exec_spaw/5" -q
+4013899
+```
+
+Or change the frequency of polling (in seconds):
+
+```bash
+./bin/wait -c "/usr/libexec/gvfsd-recent --spawner :1.2 /org/gtk/gvfs/exec_spaw/5" -q -w 10
+4013899
+```
+
+Note that you can also provide the executable (full path) to look for if it is unique, and both should
+be in quotes in case of flags, etc.
+
 ## Setup
 
 We are going to use [go-task](https://taskfile.dev/) over a Makefile. To install, [download a release](https://github.com/go-task/task/releases) and I installed with dpkg.
