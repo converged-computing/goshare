@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -18,6 +19,7 @@ var (
 	command    string
 	executable string
 	wait       int = 5
+	quiet      bool
 )
 
 func main() {
@@ -25,13 +27,16 @@ func main() {
 	flag.StringVar(&command, "c", "", "command to look for")
 	flag.StringVar(&executable, "e", "", "executable to look for")
 	flag.IntVar(&wait, "w", 5, "seconds to wait (defaults to 5)")
+	flag.BoolVar(&quiet, "q", false, "only print final PID found")
 	flag.Parse()
 	timeout := time.Duration(wait)
 
 	if command == "" && executable == "" {
 		l.Fatal("A command (-c) or executable (-e) is required")
 	}
-	l.Printf("%s\n", command)
+	if !quiet {
+		l.Printf("%s\n", command)
+	}
 
 	for {
 		procs, err := ps.Processes()
@@ -48,11 +53,17 @@ func main() {
 				l.Fatalf("Error getting commandline %s\n", err)
 			}
 			if executable != "" && executable == exe {
-				l.Printf("Found matched executable %s with pid %s\n", exe, proc.Pid)
+				if !quiet {
+					l.Printf("Found matched executable %s with pid %d\n", exe, proc.Pid)
+				}
+				fmt.Printf("%d\n", proc.Pid)
 				return
 			}
 			if command != "" && command == cmdline {
-				l.Printf("Found matched command %s with pid %s\n", command, proc.Pid)
+				if !quiet {
+					l.Printf("Found matched command %s with pid %d\n", command, proc.Pid)
+				}
+				fmt.Printf("%d\n", proc.Pid)
 				return
 			}
 		}
