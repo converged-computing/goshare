@@ -68,6 +68,8 @@ func main() {
 			}
 		}
 		time.Sleep(timeout * time.Second)
-		l.Printf("looking for matching pid...")
+		if !quiet {
+			l.Printf("looking for matching pid...")
+		}
 	}
 }
