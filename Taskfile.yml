@@ -42,3 +42,4 @@ tasks:
       - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/wait cmd/wait/wait.go
       - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/server cmd/server/server.go
       - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/client cmd/client/client.go
+      - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/wait-fs cmd/wait-fs/wait-fs.go

@@ -19,6 +19,17 @@ for submitting jobs. I am reading that we should set `GOMAXPROCS` to be the numb
 
 ## Usage
 
+### Quick Start
+
+Build
+
+```bash
+task install
+task protoc
+task build
+task run
+```
+
 ### Server
 
 You will generally want to start a server. You can either run it as a background
@@ -91,6 +102,36 @@ Or change the frequency of polling (in seconds):
 Note that you can also provide the executable (full path) to look for if it is unique, and both should
 be in quotes in case of flags, etc.
 
+### Wait-fs
+
+`wait-fs` is a derivative of wait, but will wait for a path on the filesystem to exist.
+E.g., try running it with a path that doesn't exist in one terminal:
+
+```bash
+./bin/wait-fs -p ./does-not-exist.txt
+```
+```console
+🟧️  wait-fs: 2023/09/06 13:50:04 wait-fs.go:53: Path ./does-not-exist.txt does not exist yet, sleeping 5
+🟧️  wait-fs: 2023/09/06 13:50:09 wait-fs.go:53: Path ./does-not-exist.txt does not exist yet, sleeping 5
+```
+
+And then try creating it in another:
+
+```bash
+$ touch does-not-exist.txt
+```
+
+You'll see it discovered and the script exit.
+
+```console
+🟧️  wait-fs: 2023/09/06 13:50:04 wait-fs.go:40: ./does-not-exist.txt
+🟧️  wait-fs: 2023/09/06 13:50:04 wait-fs.go:53: Path ./does-not-exist.txt does not exist yet, sleeping 5
+🟧️  wait-fs: 2023/09/06 13:50:09 wait-fs.go:53: Path ./does-not-exist.txt does not exist yet, sleeping 5
+🟧️  wait-fs: 2023/09/06 13:50:14 wait-fs.go:49: Found existing path ./does-not-exist.txt
+```
+
+And that's it! We use this for an operator where we are waiting for a particular file to exist.
+
 ## Setup
 
 We are going to use [go-task](https://taskfile.dev/) over a Makefile. To install, [download a release](https://github.com/go-task/task/releases) and I installed with dpkg.
@@ -125,8 +166,10 @@ task protoc
 task build
 ```
 ```console
-task: [build] go build -o bin/server cmd/server/server.go
-task: [build] go build -o bin/client cmd/client/client.go
+task: [build] GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/wait cmd/wait/wait.go
+task: [build] GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/server cmd/server/server.go
+task: [build] GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/client cmd/client/client.go
+task: [build] GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/wait-fs cmd/wait-fs/wait-fs.go
 ```
 
 These are generated in [bin](bin)
