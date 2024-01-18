@@ -30,7 +30,9 @@ jobs:
           export PATH=$PWD/bin:$PATH
           task install
           task build
+          task build-arm
           task run
+
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -42,5 +44,9 @@ jobs:
             bin/client
             bin/wait-fs
             bin/wait
+            bin/server-arm
+            bin/client-arm
+            bin/wait-fs-arm
+            bin/wait-arm
         env:
           GITHUB_REPOSITORY: converged-computing/goshare

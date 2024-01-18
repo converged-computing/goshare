@@ -36,6 +36,13 @@ tasks:
       - ./bin/server &
       - sleep 1
       - ./bin/client
+  build-arm:
+    desc: build-arm
+    cmds:
+      - GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o bin/wait-arm cmd/wait/wait.go
+      - GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o bin/server-arm cmd/server/server.go
+      - GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o bin/client-arm cmd/client/client.go
+      - GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o bin/wait-fs-arm cmd/wait-fs/wait-fs.go
   build:
     desc: build
     cmds:

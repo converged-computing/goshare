@@ -27,6 +27,7 @@ Build
 task install
 task protoc
 task build
+build-arm
 task run
 ```
 
@@ -140,6 +141,7 @@ We are going to use [go-task](https://taskfile.dev/) over a Makefile. To install
 $ task --list
 task: Available tasks for this project:
 * build:                      build
+* build-arm:       build-arm
 * install-requirements:       install requirements
 * protoc:                     gen protoc
 * run:                        run
@@ -171,6 +173,13 @@ task: [build] GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/server cmd/s
 task: [build] GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/client cmd/client/client.go
 task: [build] GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/wait-fs cmd/wait-fs/wait-fs.go
 ```
+
+or for arm:
+
+```
+task build-arm
+```
+
 
 These are generated in [bin](bin)
 
